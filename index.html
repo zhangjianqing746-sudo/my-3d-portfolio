@@ -1,92 +1,378 @@
-import React, { useEffect, useState } from 'react';
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bauhaus 3D Gallery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* 包豪斯配色方案 */
+            --bg-color: #080808;
+            --bauhaus-red: #ff3b30;
+            --bauhaus-blue: #0055ff;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-color: #f0f0f0;
+        }
 
-// 1. 呼吸的红色圆点光标
-const BreathingCursor = () => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            cursor: none; /* 隐藏默认鼠标 */
+        }
 
-  useEffect(() => {
-    const updatePosition = (e) => {
-      // 使用 requestAnimationFrame 优化性能
-      requestAnimationFrame(() => {
-        setPosition({ x: e.clientX, y: e.clientY });
-      });
-    };
-    window.addEventListener('mousemove', updatePosition);
-    return () => window.removeEventListener('mousemove', updatePosition);
-  }, []);
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Archivo', sans-serif;
+            overflow: hidden; /* 防止3D元素导致滚动条 */
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 2000px; /* 3D 景深 */
+        }
 
-  return (
-    <div
-      className="fixed pointer-events-none z-50 mix-blend-difference"
-      style={{
-        left: position.x,
-        top: position.y,
-        transform: 'translate(-50%, -50%)',
-      }}
-    >
-      {/* 红色实心圆 + 呼吸动画 */}
-      <div className="w-8 h-8 bg-red-600 rounded-full animate-pulse-custom shadow-[0_0_15px_rgba(255,0,0,0.6)]" />
-      
-      {/* 补充：CSS动画需要在全局样式中定义
-         @keyframes pulse-custom {
-           0%, 100% { transform: scale(1); opacity: 1; }
-           50% { transform: scale(1.2); opacity: 0.8; }
-         }
-      */}
+        /* --- 自定义光标 --- */
+        #cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 12px;
+            height: 12px;
+            background-color: var(--bauhaus-red);
+            border-radius: 50%;
+            pointer-events: none; /* 让鼠标事件穿透 */
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: exclusion;
+            box-shadow: 0 0 10px var(--bauhaus-red);
+            animation: breathe 2s infinite ease-in-out;
+            transition: transform 0.1s ease-out; /* 轻微延迟增加跟手感 */
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.7; }
+        }
+
+        /* --- UI 覆盖层 --- */
+        .ui-layer {
+            position: fixed;
+            z-index: 100;
+            width: 100%;
+            pointer-events: none; /* 允许点击下方的3D场景（如果有交互） */
+            padding: 40px;
+        }
+
+        header {
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 700;
+            mix-blend-mode: difference;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--bauhaus-blue);
+            margin-top: 5px;
+        }
+
+        /* --- 底部控制栏 (玻璃胶囊) --- */
+        .controls {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            padding: 15px 25px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px; /* 胶囊形状 */
+            pointer-events: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .btn {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            padding: 8px 16px;
+            font-family: 'Archivo', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+        }
+
+        .btn:hover, .btn.active {
+            color: #fff;
+            text-shadow: 0 0 8px rgba(255,255,255,0.5);
+        }
+
+        .btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background-color: var(--bauhaus-blue);
+            border-radius: 50%;
+        }
+
+        /* --- 3D 舞台区域 --- */
+        #scene {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gallery {
+            position: relative;
+            width: 0;
+            height: 0;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* --- 卡片样式 --- */
+        .card {
+            position: absolute;
+            width: 200px; /* 3:4 比例 */
+            height: 266px;
+            left: -100px; /* 居中 */
+            top: -133px;
+            background-color: #222;
+            background-size: cover;
+            background-position: center;
+            border-radius: 4px;
+            /* 玻璃质感边框 */
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 20px 50px rgba(0,0,0,0.8);
+            transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1), opacity 1s ease;
+            overflow: hidden;
+            /* 3D 渲染优化 */
+            backface-visibility: hidden; 
+            -webkit-backface-visibility: hidden;
+        }
+
+        /* 给图片加一个包豪斯风格的蓝色滤镜层，hover时消失 */
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(45deg, rgba(42, 42, 255, 0.4), transparent);
+            opacity: 0.6;
+            transition: opacity 0.4s ease;
+        }
+        
+        .card:hover::after {
+            opacity: 0;
+        }
+
+        .card:hover {
+            box-shadow: 0 0 0 2px var(--bauhaus-red), 0 25px 60px rgba(0,0,0,0.9);
+            z-index: 10; /* Hover 时层级提高 */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="cursor"></div>
+
+    <header>
+        <h1>Bauhaus <span style="color:var(--bauhaus-red)">Archive</span></h1>
+        <div class="subtitle">Spatial Image Gallery</div>
+    </header>
+
+    <div id="scene">
+        <div id="gallery">
+            </div>
     </div>
-  );
-};
 
-// 2. 玻璃质感胶囊菜单
-const GlassMenu = ({ setMode }) => {
-  return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-40">
-      {/* 胶囊容器 */}
-      <div className="
-        flex gap-6 px-8 py-4 rounded-full
-        bg-blue-900/20 backdrop-blur-xl border border-white/20
-        shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]
-        hover:border-red-500/50 transition-colors duration-500
-      ">
-        <button 
-          onClick={() => setMode('wave')}
-          className="text-white/80 font-bold hover:text-red-500 transition-colors uppercase tracking-widest"
-        >
-          Wave
-        </button>
-        <button 
-          onClick={() => setMode('random')}
-          className="text-white/80 font-bold hover:text-red-500 transition-colors uppercase tracking-widest"
-        >
-          Random
-        </button>
-        <button 
-          onClick={() => setMode('circle')}
-          className="text-white/80 font-bold hover:text-red-500 transition-colors uppercase tracking-widest"
-        >
-          Circle
-        </button>
-      </div>
+    <div class="controls">
+        <button class="btn active" onclick="switchLayout('random')">Random</button>
+        <button class="btn" onclick="switchLayout('ring')">Ring</button>
+        <button class="btn" onclick="switchLayout('wave')">Wave</button>
     </div>
-  );
-};
 
-export default function Portfolio() {
-  const [layoutMode, setMode] = useState('wave');
+    <script>
+        // --- 1. 数据配置 (Unsplash 图片) ---
+        // 你可以在这里添加更多图片链接
+        const projects = [
+            'https://images.unsplash.com/photo-1518365654394-1925b68991a0?w=600&q=80',
+            'https://images.unsplash.com/photo-1549490349-8643362247b5?w=600&q=80',
+            'https://images.unsplash.com/photo-1506765515384-028b60a970df?w=600&q=80',
+            'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=600&q=80',
+            'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=600&q=80',
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&q=80',
+            'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80',
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80',
+            'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=600&q=80',
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&q=80',
+            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80'
+        ];
 
-  return (
-    <div className="w-full h-screen bg-neutral-900 relative overflow-hidden">
-      <BreathingCursor />
-      
-      {/* 这里放置 Three.js 的 Canvas */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-700 to-red-700 opacity-20">
-         {/* 3D Scene Placeholder */}
-         <div className="w-full h-full flex items-center justify-center text-white/10 text-4xl font-black">
-           3D CANVAS AREA ({layoutMode})
-         </div>
-      </div>
+        const gallery = document.getElementById('gallery');
+        const cards = [];
 
-      <GlassMenu setMode={setMode} />
-    </div>
-  );
-}
+        // --- 2. 初始化 ---
+        function init() {
+            // 生成卡片 DOM
+            projects.forEach((url, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.backgroundImage = `url(${url})`;
+                
+                // 将卡片元素存入数组，方便后续操作
+                cards.push(card);
+                gallery.appendChild(card);
+            });
+
+            // 初始布局
+            layoutRandom();
+            
+            // 监听鼠标移动，实现 3D 场景的轻微视差效果
+            document.addEventListener('mousemove', onMouseMove);
+        }
+
+        // --- 3. 布局逻辑 ---
+
+        // 布局 A: 随机散布 (Random)
+        function layoutRandom() {
+            cards.forEach(card => {
+                // 随机位置 (x, y, z)
+                const tx = (Math.random() - 0.5) * 1000;
+                const ty = (Math.random() - 0.5) * 600;
+                const tz = (Math.random() - 0.5) * 800;
+                // 随机旋转
+                const rx = (Math.random() - 0.5) * 60;
+                const ry = (Math.random() - 0.5) * 60;
+
+                card.style.transform = `translate3d(${tx}px, ${ty}px, ${tz}px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+                card.style.opacity = '1';
+            });
+            
+            // 重置画廊整体旋转
+            gallery.style.transform = `rotateY(0deg)`;
+        }
+
+        // 布局 B: 圆环 (Ring)
+        function layoutRing() {
+            const radius = 600; // 圆环半径
+            const total = cards.length;
+            const step = (Math.PI * 2) / total;
+
+            cards.forEach((card, index) => {
+                const angle = index * step;
+                // 计算圆周上的坐标
+                const x = Math.sin(angle) * radius;
+                const z = Math.cos(angle) * radius;
+                // 旋转角度，让图片面向圆心
+                const rotY = angle * (180 / Math.PI); 
+
+                card.style.transform = `translate3d(${x}px, 0, ${z}px) rotateY(${rotY}deg)`;
+                card.style.opacity = '1';
+            });
+            
+            // 重置画廊整体旋转
+            gallery.style.transform = `rotateY(0deg)`;
+        }
+
+        // 布局 C: 波浪 (Wave)
+        function layoutWave() {
+            const total = cards.length;
+            
+            cards.forEach((card, index) => {
+                const x = (index - total / 2) * 120; // 水平间距
+                const y = Math.sin(index * 0.5) * 200; // 正弦波高度
+                const z = Math.cos(index * 0.5) * 200; // 深度螺旋
+                
+                // 稍微旋转一下，顺着波浪方向
+                const rotZ = Math.cos(index * 0.5) * 20;
+
+                card.style.transform = `translate3d(${x}px, ${y}px, ${z}px) rotateZ(${rotZ}deg)`;
+                card.style.opacity = '1';
+            });
+            
+            // 微微倾斜画廊，让波浪更好看
+            gallery.style.transform = `rotateX(-10deg) rotateY(10deg)`;
+        }
+
+        // --- 4. 交互控制 ---
+
+        let currentLayout = 'random';
+        const btns = document.querySelectorAll('.btn');
+
+        function switchLayout(type) {
+            currentLayout = type;
+            
+            // 更新按钮状态
+            btns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 执行布局
+            if (type === 'random') layoutRandom();
+            if (type === 'ring') layoutRing();
+            if (type === 'wave') layoutWave();
+        }
+
+        // --- 5. 鼠标与光标逻辑 ---
+        const cursor = document.getElementById('cursor');
+
+        function onMouseMove(e) {
+            // 自定义光标跟随
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+
+            // 3D 场景视差效果 (Parallax)
+            // 根据鼠标位置，轻微旋转整个画廊容器
+            const x = (window.innerWidth / 2 - e.clientX) / 50;
+            const y = (window.innerHeight / 2 - e.clientY) / 50;
+            
+            // 叠加在现有 transform 上会比较复杂，这里简单地应用在 scene 上，
+            // 或者只在 Random 模式下启用，为了代码简洁，这里应用在 Gallery 的父级 #scene 上会更安全
+            // 但因为 #gallery 有自己的 transition，我们让 gallery 自己动
+            
+            if (currentLayout === 'random') {
+               // 仅在随机模式下增加大幅度视差
+               gallery.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
+            } else if (currentLayout === 'ring') {
+               // 环形模式下，鼠标控制整体旋转
+               gallery.style.transform = `rotateY(${x * 2}deg)`;
+            }
+        }
+
+        // 启动
+        init();
+
+    </script>
+</body>
+</html>
