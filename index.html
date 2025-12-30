@@ -1,0 +1,92 @@
+import React, { useEffect, useState } from 'react';
+
+// 1. 呼吸的红色圆点光标
+const BreathingCursor = () => {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const updatePosition = (e) => {
+      // 使用 requestAnimationFrame 优化性能
+      requestAnimationFrame(() => {
+        setPosition({ x: e.clientX, y: e.clientY });
+      });
+    };
+    window.addEventListener('mousemove', updatePosition);
+    return () => window.removeEventListener('mousemove', updatePosition);
+  }, []);
+
+  return (
+    <div
+      className="fixed pointer-events-none z-50 mix-blend-difference"
+      style={{
+        left: position.x,
+        top: position.y,
+        transform: 'translate(-50%, -50%)',
+      }}
+    >
+      {/* 红色实心圆 + 呼吸动画 */}
+      <div className="w-8 h-8 bg-red-600 rounded-full animate-pulse-custom shadow-[0_0_15px_rgba(255,0,0,0.6)]" />
+      
+      {/* 补充：CSS动画需要在全局样式中定义
+         @keyframes pulse-custom {
+           0%, 100% { transform: scale(1); opacity: 1; }
+           50% { transform: scale(1.2); opacity: 0.8; }
+         }
+      */}
+    </div>
+  );
+};
+
+// 2. 玻璃质感胶囊菜单
+const GlassMenu = ({ setMode }) => {
+  return (
+    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-40">
+      {/* 胶囊容器 */}
+      <div className="
+        flex gap-6 px-8 py-4 rounded-full
+        bg-blue-900/20 backdrop-blur-xl border border-white/20
+        shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]
+        hover:border-red-500/50 transition-colors duration-500
+      ">
+        <button 
+          onClick={() => setMode('wave')}
+          className="text-white/80 font-bold hover:text-red-500 transition-colors uppercase tracking-widest"
+        >
+          Wave
+        </button>
+        <button 
+          onClick={() => setMode('random')}
+          className="text-white/80 font-bold hover:text-red-500 transition-colors uppercase tracking-widest"
+        >
+          Random
+        </button>
+        <button 
+          onClick={() => setMode('circle')}
+          className="text-white/80 font-bold hover:text-red-500 transition-colors uppercase tracking-widest"
+        >
+          Circle
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default function Portfolio() {
+  const [layoutMode, setMode] = useState('wave');
+
+  return (
+    <div className="w-full h-screen bg-neutral-900 relative overflow-hidden">
+      <BreathingCursor />
+      
+      {/* 这里放置 Three.js 的 Canvas */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-700 to-red-700 opacity-20">
+         {/* 3D Scene Placeholder */}
+         <div className="w-full h-full flex items-center justify-center text-white/10 text-4xl font-black">
+           3D CANVAS AREA ({layoutMode})
+         </div>
+      </div>
+
+      <GlassMenu setMode={setMode} />
+    </div>
+  );
+}
