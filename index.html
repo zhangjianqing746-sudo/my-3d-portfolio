@@ -3,375 +3,700 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bauhaus 3D Gallery</title>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700&display=swap" rel="stylesheet">
-    
+    <title>2025 Review - White Narrative End</title>
     <style>
-        :root {
-            /* 包豪斯配色方案 */
-            --bg-color: #080808;
-            --bauhaus-red: #ff3b30;
-            --bauhaus-blue: #0055ff;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-color: #f0f0f0;
+        /* --- [核心] 强制隐藏系统光标 --- */
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            cursor: none !important; 
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            cursor: none; /* 隐藏默认鼠标 */
-        }
-
+        
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Archivo', sans-serif;
-            overflow: hidden; /* 防止3D元素导致滚动条 */
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            perspective: 2000px; /* 3D 景深 */
+            background-color: #050505; color: #fff;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden; height: 100vh; width: 100vw; user-select: none;
         }
 
         /* --- 自定义光标 --- */
         #cursor {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 12px;
-            height: 12px;
-            background-color: var(--bauhaus-red);
-            border-radius: 50%;
-            pointer-events: none; /* 让鼠标事件穿透 */
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            mix-blend-mode: exclusion;
-            box-shadow: 0 0 10px var(--bauhaus-red);
-            animation: breathe 2s infinite ease-in-out;
-            transition: transform 0.1s ease-out; /* 轻微延迟增加跟手感 */
+            position: fixed; top: 0; left: 0; width: 20px; height: 20px;
+            background-color: rgba(255, 255, 255, 0.9); border-radius: 50%;
+            pointer-events: none; transform: translate(-50%, -50%); z-index: 9999;
+            mix-blend-mode: difference; transition: width 0.2s, height 0.2s;
+            animation: breathe 3s infinite ease-in-out;
         }
-
         @keyframes breathe {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.7; }
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+            50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.5; }
         }
 
-        /* --- UI 覆盖层 --- */
-        .ui-layer {
-            position: fixed;
-            z-index: 100;
-            width: 100%;
-            pointer-events: none; /* 允许点击下方的3D场景（如果有交互） */
-            padding: 40px;
+        /* --- 首页 --- */
+        #landing-page {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; justify-content: center; align-items: center;
+            z-index: 1000; transition: opacity 1.5s ease;
+        }
+        #landing-text {
+            font-size: 2.5rem; letter-spacing: 6px; color: #fff;
+            text-transform: uppercase; font-weight: 200;
+            transition: transform 0.5s ease;
+        }
+        #landing-text:hover { transform: scale(1.05); text-shadow: 0 0 30px rgba(255,255,255,0.5); }
+
+        /* --- 主容器 --- */
+        #main-container {
+            position: relative; width: 100%; height: 100%; opacity: 0;
+            transition: opacity 2.5s ease; overflow: hidden;
         }
 
-        header {
-            position: fixed;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
+        /* 左上角标题 */
+        .top-left-title {
+            position: absolute; top: 40px; left: 40px; z-index: 100;
+            font-size: 0.9rem; text-transform: uppercase; letter-spacing: 4px;
+            font-weight: 300; color: rgba(255, 255, 255, 0.6); pointer-events: none;
         }
 
-        h1 {
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            font-weight: 700;
-            mix-blend-mode: difference;
+        /* --- UI --- */
+        .ui-controls { position: absolute; top: 40px; right: 40px; z-index: 100; }
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255,255,255,0.8);
+            padding: 12px 24px; border-radius: 40px; font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 2px; display: flex;
+            align-items: center; gap: 12px; pointer-events: auto;
+        }
+        input[type="range"] {
+            -webkit-appearance: none; width: 80px; height: 2px;
+            background: rgba(255,255,255,0.3); outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 10px; height: 10px;
+            background: #fff; border-radius: 50%;
         }
 
-        .subtitle {
-            font-size: 0.8rem;
-            color: var(--bauhaus-blue);
-            margin-top: 5px;
+        /* --- 连接粒子 Canvas 层 --- */
+        #connection-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1; opacity: 0; transition: opacity 2s ease 1s; mix-blend-mode: screen;
         }
 
-        /* --- 底部控制栏 (玻璃胶囊) --- */
-        .controls {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            padding: 15px 25px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 50px; /* 胶囊形状 */
-            pointer-events: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .btn {
-            background: transparent;
-            border: none;
-            color: rgba(255,255,255,0.6);
-            padding: 8px 16px;
-            font-family: 'Archivo', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            border-radius: 20px;
-        }
-
-        .btn:hover, .btn.active {
-            color: #fff;
-            text-shadow: 0 0 8px rgba(255,255,255,0.5);
-        }
-
-        .btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 4px;
-            background-color: var(--bauhaus-blue);
-            border-radius: 50%;
-        }
-
-        /* --- 3D 舞台区域 --- */
-        #scene {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #gallery {
-            position: relative;
-            width: 0;
-            height: 0;
-            transform-style: preserve-3d;
-            transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        /* --- 卡片样式 --- */
-        .card {
-            position: absolute;
-            width: 200px; /* 3:4 比例 */
-            height: 266px;
-            left: -100px; /* 居中 */
-            top: -133px;
-            background-color: #222;
-            background-size: cover;
-            background-position: center;
-            border-radius: 4px;
-            /* 玻璃质感边框 */
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 20px 50px rgba(0,0,0,0.8);
-            transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1), opacity 1s ease;
-            overflow: hidden;
-            /* 3D 渲染优化 */
-            backface-visibility: hidden; 
-            -webkit-backface-visibility: hidden;
-        }
-
-        /* 给图片加一个包豪斯风格的蓝色滤镜层，hover时消失 */
-        .card::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(45deg, rgba(42, 42, 255, 0.4), transparent);
-            opacity: 0.6;
-            transition: opacity 0.4s ease;
+        /* --- 核心画廊 --- */
+        .gallery-wrapper { position: absolute; bottom: 0; left: 50%; width: 0; height: 0; z-index: 2; }
+        
+        .rotator {
+            position: absolute; bottom: 0; left: 0; transform-origin: center center;
+            will-change: transform; 
         }
         
-        .card:hover::after {
-            opacity: 0;
+        .card-group {
+            position: absolute; height: 95vh; width: 0; bottom: 0; left: 0;
+            transform-origin: bottom center; pointer-events: none;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); 
+        }
+
+        /* --- 普通卡片 --- */
+        .card {
+            position: absolute; top: 0; left: -75px; width: 150px; height: 210px;
+            background-color: #1a1a1a; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; overflow: visible; pointer-events: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.6s, border-color 0.6s;
+            animation: water-float-idle 10s ease-in-out infinite;
         }
 
         .card:hover {
-            box-shadow: 0 0 0 2px var(--bauhaus-red), 0 25px 60px rgba(0,0,0,0.9);
-            z-index: 10; /* Hover 时层级提高 */
+            z-index: 100;
+            transform: scale(1.2) translateY(-30px) !important; 
+            border-color: rgba(255,255,255,0.8);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.9);
+            animation-play-state: paused; 
         }
 
+        .card img {
+            width: 100%; height: 100%; object-fit: cover; border-radius: 7px;
+            opacity: 0.6; transition: opacity 0.3s; pointer-events: none;
+        }
+        .card:hover img { opacity: 1; filter: contrast(1.1); }
+
+        /* --- 特殊文字卡片 (TO BE CONTINUED...) --- */
+        .card.text-card {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+        /* [核心修改] 恢复白色样式 */
+        .text-card-content {
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            color: rgba(255, 255, 255, 0.4); /* 幽灵白 */
+            opacity: 1;
+            text-transform: uppercase;
+            text-align: center;
+            white-space: nowrap;
+            font-weight: 300;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.1); /* 白色微光 */
+        }
+
+        /* 磨砂玻璃按钮容器 */
+        .card-actions-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            gap: 20px; opacity: 0; transition: opacity 0.4s ease; pointer-events: none;
+            z-index: 20;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+        }
+        .card:hover .card-actions-overlay { opacity: 1; }
+
+        /* 按钮设计 */
+        .action-btn {
+            position: relative; width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; display: flex; justify-content: center; align-items: center;
+            pointer-events: auto; backdrop-filter: blur(4px);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .action-btn::after {
+            content: ''; position: absolute;
+            top: -20px; left: -20px; right: -20px; bottom: -20px;
+        }
+        .action-btn:hover { background: #fff; color: #000; transform: scale(1.1); }
+        
+        .action-btn.music-btn.has-audio { color: #FFD700; border-color: #FFD700; }
+        .action-btn.music-btn.has-audio:hover { background: #FFD700; color: #000; }
+
+        /* --- 标签基础样式 --- */
+        .month-label {
+            position: absolute; bottom: -70px; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.3); font-size: 11px; letter-spacing: 4px;
+            pointer-events: none; transition: all 0.5s;
+            text-transform: uppercase; 
+        }
+        .month-label::before {
+            content: ''; position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
+            width: 1px; height: 35px; background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+            transition: all 0.5s;
+        }
+        .card:hover .month-label { color: #fff; transform: translateX(-50%) translateY(10px); }
+        .card:hover .month-label::before { height: 50px; top: -55px; background: linear-gradient(to bottom, #fff, transparent); }
+
+        /* --- [核心] 黄金JAN样式 (第1个) --- */
+        .rotator .card-group:first-child .month-label {
+            color: #FFD700; opacity: 0.9;
+        }
+        .rotator .card-group:first-child .card:hover .month-label {
+            color: #FFD700; opacity: 1;
+        }
+        .rotator .card-group:first-child .month-label::before,
+        .rotator .card-group:first-child .card:hover .month-label::before {
+            background: linear-gradient(to bottom, #FFD700, transparent); opacity: 0.8;
+        }
+
+        /* --- [核心] 黄金DEC样式 (第12个) --- */
+        .rotator .card-group:nth-child(12) .month-label {
+            color: #FFD700; opacity: 0.9;
+        }
+        .rotator .card-group:nth-child(12) .card:hover .month-label {
+            color: #FFD700; opacity: 1;
+        }
+        .rotator .card-group:nth-child(12) .month-label::before,
+        .rotator .card-group:nth-child(12) .card:hover .month-label::before {
+            background: linear-gradient(to bottom, #FFD700, transparent); opacity: 0.8;
+        }
+
+        @keyframes water-float-idle {
+            0%, 100% { transform: translateY(0) rotate(0.5deg); }
+            50% { transform: translateY(-8px) rotate(-0.5deg); }
+        }
+
+        /* --- 黑胶 --- */
+        .vinyl-section {
+            position: absolute; bottom: 0; left: 50%;
+            transform: translateX(-50%) translateY(60%);
+            width: 110vh; height: 110vh; z-index: 0; pointer-events: auto;
+        }
+        .vinyl-record {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: radial-gradient(circle at center, #0a0a0a 0%, #000 85%);
+            position: relative; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 100px rgba(0,0,0,1); 
+        }
+        #particle-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%; pointer-events: none; opacity: 0.9;
+        }
+        .bgm-icon-overlay {
+            position: absolute; z-index: 10; pointer-events: none; opacity: 0;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            transition: opacity 0.3s; color: rgba(255,255,255,0.6); font-size: 10px; letter-spacing: 2px;
+        }
+        .vinyl-record:hover .bgm-icon-overlay { opacity: 1; }
+        .vinyl-center-hole {
+            width: 18px; height: 18px; background: #000; border-radius: 50%;
+            position: absolute; z-index: 5; border: 1px solid #222;
+        }
+
+        .action-hint {
+            position: absolute; bottom: 30px; width: 100%; text-align: center;
+            font-size: 0.8rem; letter-spacing: 2px; color: rgba(255,255,255,0.3);
+            pointer-events: none; mix-blend-mode: overlay;
+        }
+        input[type="file"] { display: none; }
     </style>
 </head>
 <body>
 
     <div id="cursor"></div>
 
-    <header>
-        <h1>Bauhaus <span style="color:var(--bauhaus-red)">Archive</span></h1>
-        <div class="subtitle">Spatial Image Gallery</div>
-    </header>
-
-    <div id="scene">
-        <div id="gallery">
-            </div>
+    <div id="landing-page" onclick="enterSite()">
+        <h1 id="landing-text">Review my own 2025 Years</h1>
     </div>
 
-    <div class="controls">
-        <button class="btn active" onclick="switchLayout('random')">Random</button>
-        <button class="btn" onclick="switchLayout('ring')">Ring</button>
-        <button class="btn" onclick="switchLayout('wave')">Wave</button>
+    <div id="main-container">
+        
+        <div class="top-left-title">Your own memory</div>
+        <canvas id="connection-canvas"></canvas>
+
+        <div class="ui-controls">
+            <div class="glass-btn">
+                <span>BGM Vol</span>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.5">
+            </div>
+        </div>
+
+        <div class="gallery-wrapper">
+            <div class="rotator" id="rotator"></div>
+        </div>
+
+        <div class="vinyl-section" onclick="startUpload('bgm')">
+            <div class="vinyl-record" id="vinyl">
+                <canvas id="particle-canvas"></canvas>
+                <div class="vinyl-center-hole"></div>
+                <div class="bgm-icon-overlay">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                    <span>SET BGM</span>
+                </div>
+            </div>
+            <audio id="bgm" loop></audio>
+            <input type="file" id="bgm-upload-input" accept="audio/*">
+        </div>
+
+        <div class="action-hint">Hover card to edit • Click vinyl for BGM</div>
+        
+        <input type="file" id="img-upload-input" accept="image/*">
+        <input type="file" id="card-audio-input" accept="audio/*">
+        <audio id="card-preview-audio"></audio>
+
     </div>
 
     <script>
-        // --- 1. 数据配置 (Unsplash 图片) ---
-        // 你可以在这里添加更多图片链接
-        const projects = [
-            'https://images.unsplash.com/photo-1518365654394-1925b68991a0?w=600&q=80',
-            'https://images.unsplash.com/photo-1549490349-8643362247b5?w=600&q=80',
-            'https://images.unsplash.com/photo-1506765515384-028b60a970df?w=600&q=80',
-            'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=600&q=80',
-            'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=600&q=80',
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&q=80',
-            'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80',
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80',
-            'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=600&q=80',
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
-            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&q=80',
-            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80'
-        ];
+        // --- 逻辑初始化 ---
+        const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "TBC"];
+        let activeCardForImg = null;
+        let activeCardForAudio = null;
+        
+        let currentRotatorAngle = 0;
+        let targetRotatorAngle = 0;
+        let angleOffset = 0; 
+        let isUploading = false; 
+        let needsSync = false;   
 
-        const gallery = document.getElementById('gallery');
-        const cards = [];
+        let vinylParticles = [];
+        let connectionParticles = []; 
+        let isBgmPlaying = false;
 
-        // --- 2. 初始化 ---
-        function init() {
-            // 生成卡片 DOM
-            projects.forEach((url, index) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.style.backgroundImage = `url(${url})`;
+        // --- 进场动画 ---
+        function enterSite() {
+            const landing = document.getElementById('landing-page');
+            const main = document.getElementById('main-container');
+            const connectionCanvas = document.getElementById('connection-canvas');
+            
+            landing.style.opacity = '0';
+            setTimeout(() => {
+                landing.style.display = 'none';
+                main.style.opacity = '1';
+                connectionCanvas.style.opacity = '1'; 
+                document.getElementById('bgm').volume = 0.5;
                 
-                // 将卡片元素存入数组，方便后续操作
-                cards.push(card);
-                gallery.appendChild(card);
-            });
-
-            // 初始布局
-            layoutRandom();
-            
-            // 监听鼠标移动，实现 3D 场景的轻微视差效果
-            document.addEventListener('mousemove', onMouseMove);
-        }
-
-        // --- 3. 布局逻辑 ---
-
-        // 布局 A: 随机散布 (Random)
-        function layoutRandom() {
-            cards.forEach(card => {
-                // 随机位置 (x, y, z)
-                const tx = (Math.random() - 0.5) * 1000;
-                const ty = (Math.random() - 0.5) * 600;
-                const tz = (Math.random() - 0.5) * 800;
-                // 随机旋转
-                const rx = (Math.random() - 0.5) * 60;
-                const ry = (Math.random() - 0.5) * 60;
-
-                card.style.transform = `translate3d(${tx}px, ${ty}px, ${tz}px) rotateX(${rx}deg) rotateY(${ry}deg)`;
-                card.style.opacity = '1';
-            });
-            
-            // 重置画廊整体旋转
-            gallery.style.transform = `rotateY(0deg)`;
-        }
-
-        // 布局 B: 圆环 (Ring)
-        function layoutRing() {
-            const radius = 600; // 圆环半径
-            const total = cards.length;
-            const step = (Math.PI * 2) / total;
-
-            cards.forEach((card, index) => {
-                const angle = index * step;
-                // 计算圆周上的坐标
-                const x = Math.sin(angle) * radius;
-                const z = Math.cos(angle) * radius;
-                // 旋转角度，让图片面向圆心
-                const rotY = angle * (180 / Math.PI); 
-
-                card.style.transform = `translate3d(${x}px, 0, ${z}px) rotateY(${rotY}deg)`;
-                card.style.opacity = '1';
-            });
-            
-            // 重置画廊整体旋转
-            gallery.style.transform = `rotateY(0deg)`;
-        }
-
-        // 布局 C: 波浪 (Wave)
-        function layoutWave() {
-            const total = cards.length;
-            
-            cards.forEach((card, index) => {
-                const x = (index - total / 2) * 120; // 水平间距
-                const y = Math.sin(index * 0.5) * 200; // 正弦波高度
-                const z = Math.cos(index * 0.5) * 200; // 深度螺旋
+                initGallery();
+                initVinylParticles();
+                initConnectionParticles(); 
+                animateAll(); 
                 
-                // 稍微旋转一下，顺着波浪方向
-                const rotZ = Math.cos(index * 0.5) * 20;
+                document.dispatchEvent(new MouseEvent('mousemove', {clientX: window.innerWidth/2, clientY: window.innerHeight/2}));
+            }, 1500);
+        }
 
-                card.style.transform = `translate3d(${x}px, ${y}px, ${z}px) rotateZ(${rotZ}deg)`;
-                card.style.opacity = '1';
+        // --- 画廊初始化 ---
+        function initGallery() {
+            const rotator = document.getElementById('rotator');
+            const stepAngle = 28;
+            const startAngle = -((months.length - 1) * stepAngle) / 2;
+
+            months.forEach((month, index) => {
+                const angle = startAngle + (index * stepAngle);
+                const group = document.createElement('div');
+                group.className = 'card-group';
+                group.style.transform = `rotate(${angle}deg)`;
+                group.dataset.baseAngle = angle;
+
+                if (month === "TBC") {
+                    const tbcCard = document.createElement('div');
+                    tbcCard.className = 'card text-card'; 
+                    tbcCard.style.animationDelay = `${Math.random() * 5}s`;
+                    
+                    const tbcText = document.createElement('div');
+                    tbcText.className = 'text-card-content';
+                    // [内容]
+                    tbcText.innerText = "TO BE CONTINUED...";
+                    
+                    tbcCard.appendChild(tbcText);
+                    group.appendChild(tbcCard);
+                } 
+                else {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.style.animationDelay = `${Math.random() * 5}s`;
+                    card.id = `card-${index}`; 
+
+                    const img = document.createElement('img');
+                    img.src = `https://picsum.photos/300/420?random=${index + 100}`;
+                    
+                    const actionsOverlay = document.createElement('div');
+                    actionsOverlay.className = 'card-actions-overlay';
+
+                    const photoBtn = document.createElement('div');
+                    photoBtn.className = 'action-btn photo-btn';
+                    photoBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>';
+                    photoBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        startUpload('img');
+                        activeCardForImg = img;
+                        document.getElementById('img-upload-input').click();
+                    };
+
+                    const musicBtn = document.createElement('div');
+                    musicBtn.className = 'action-btn music-btn';
+                    musicBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>';
+                    musicBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        activeCardForAudio = card;
+                        if (card.dataset.audioUrl) {
+                            playCardAudio(card.dataset.audioUrl);
+                        } else {
+                            startUpload('audio');
+                            document.getElementById('card-audio-input').click();
+                        }
+                    };
+
+                    actionsOverlay.appendChild(photoBtn);
+                    actionsOverlay.appendChild(musicBtn);
+
+                    const label = document.createElement('div');
+                    label.className = 'month-label';
+                    label.innerText = month;
+
+                    card.appendChild(img);
+                    card.appendChild(actionsOverlay);
+                    card.appendChild(label);
+                    group.appendChild(card);
+                }
+                
+                rotator.appendChild(group);
             });
-            
-            // 微微倾斜画廊，让波浪更好看
-            gallery.style.transform = `rotateX(-10deg) rotateY(10deg)`;
         }
 
-        // --- 4. 交互控制 ---
+        // --- 连接粒子系统 ---
+        class ConnectionParticle {
+            constructor(startIndex, endIndex) {
+                this.startIndex = startIndex;
+                this.endIndex = endIndex;
+                this.reset();
+                this.progress = Math.random();
+            }
+            reset() {
+                this.progress = 0;
+                this.speed = 0.005 + Math.random() * 0.005;
+                this.size = Math.random() * 2 + 0.5;
+                this.alpha = 1;
+                this.offset = (Math.random() - 0.5) * 30; 
+            }
+            update(cardPositions) {
+                this.progress += this.speed;
+                if(this.progress >= 1) this.reset();
+                
+                const startPos = cardPositions[this.startIndex];
+                const endPos = cardPositions[this.endIndex];
 
-        let currentLayout = 'random';
-        const btns = document.querySelectorAll('.btn');
+                if(startPos && endPos) {
+                    this.x = startPos.x + (endPos.x - startPos.x) * this.progress;
+                    this.y = startPos.y + (endPos.y - startPos.y) * this.progress;
+                    const dx = endPos.x - startPos.x;
+                    const dy = endPos.y - startPos.y;
+                    this.x += -dy * 0.05 * (this.offset / 30); 
+                    this.y += dx * 0.05 * (this.offset / 30);
 
-        function switchLayout(type) {
-            currentLayout = type;
-            
-            // 更新按钮状态
-            btns.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-
-            // 执行布局
-            if (type === 'random') layoutRandom();
-            if (type === 'ring') layoutRing();
-            if (type === 'wave') layoutWave();
-        }
-
-        // --- 5. 鼠标与光标逻辑 ---
-        const cursor = document.getElementById('cursor');
-
-        function onMouseMove(e) {
-            // 自定义光标跟随
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-
-            // 3D 场景视差效果 (Parallax)
-            // 根据鼠标位置，轻微旋转整个画廊容器
-            const x = (window.innerWidth / 2 - e.clientX) / 50;
-            const y = (window.innerHeight / 2 - e.clientY) / 50;
-            
-            // 叠加在现有 transform 上会比较复杂，这里简单地应用在 scene 上，
-            // 或者只在 Random 模式下启用，为了代码简洁，这里应用在 Gallery 的父级 #scene 上会更安全
-            // 但因为 #gallery 有自己的 transition，我们让 gallery 自己动
-            
-            if (currentLayout === 'random') {
-               // 仅在随机模式下增加大幅度视差
-               gallery.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
-            } else if (currentLayout === 'ring') {
-               // 环形模式下，鼠标控制整体旋转
-               gallery.style.transform = `rotateY(${x * 2}deg)`;
+                    if(this.progress < 0.2) this.alpha = this.progress * 5;
+                    else if(this.progress > 0.8) this.alpha = (1 - this.progress) * 5;
+                    else this.alpha = 1;
+                } else {
+                    this.alpha = 0;
+                }
+            }
+            draw(ctx) {
+                if(this.alpha <= 0) return;
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
-        // 启动
-        init();
+        function initConnectionParticles() {
+            const canvas = document.getElementById('connection-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            window.addEventListener('resize', () => {
+                 canvas.width = window.innerWidth;
+                 canvas.height = window.innerHeight;
+            });
+
+            // 仅连接 JAN-DEC
+            for (let i = 0; i < months.length - 2; i++) {
+                const nextIndex = i + 1;
+                for(let j=0; j<25; j++) { 
+                    connectionParticles.push(new ConnectionParticle(i, nextIndex));
+                }
+            }
+        }
+
+        function updateAndDrawConnections() {
+            const canvas = document.getElementById('connection-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const cardPositions = [];
+            for(let i=0; i<months.length; i++) {
+                const card = document.getElementById(`card-${i}`);
+                if(card) {
+                    const rect = card.getBoundingClientRect();
+                    cardPositions.push({
+                        x: rect.left + rect.width / 2,
+                        y: rect.top + rect.height / 2
+                    });
+                } else {
+                    cardPositions.push(null);
+                }
+            }
+
+            connectionParticles.forEach(p => {
+                p.update(cardPositions);
+                p.draw(ctx);
+            });
+        }
+
+
+        // --- [核心交互逻辑] ---
+        function startUpload(type) {
+            isUploading = true;
+            if(type === 'bgm') document.getElementById('bgm-upload-input').click();
+        }
+
+        function endUpload() {
+            isUploading = false;
+            needsSync = true; 
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.getElementById('cursor');
+            if (cursor) {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            }
+
+            if (isUploading) return;
+
+            if (document.getElementById('main-container').style.opacity !== '1') return;
+
+            const x = e.clientX;
+            const width = window.innerWidth;
+            // 260范围
+            const maxRotation = 260; 
+            
+            let norm = (x / width) - 0.5; 
+            norm = norm * 2.0; 
+            norm = Math.max(-0.5, Math.min(0.5, norm)); 
+            
+            const percentage = norm + 0.5;
+
+            const rawTargetAngle = (1 - percentage) * (maxRotation * 2) - maxRotation;
+
+            if (needsSync) {
+                angleOffset = currentRotatorAngle - rawTargetAngle;
+                needsSync = false;
+            }
+
+            targetRotatorAngle = rawTargetAngle + angleOffset;
+        });
+
+        window.addEventListener('focus', () => {
+            if (isUploading) endUpload();
+        });
+
+        // 光标特效
+        document.addEventListener('mouseover', (e) => {
+            const target = e.target;
+            const cursor = document.getElementById('cursor');
+            if (target.closest('.action-btn') || target.closest('.glass-btn')) {
+                cursor.style.transform = 'translate(-50%, -50%) scale(0.6)';
+                cursor.style.background = '#fff';
+                cursor.style.mixBlendMode = 'normal';
+            } else if (target.closest('.card') || target.closest('.vinyl-record')) {
+                cursor.style.transform = 'translate(-50%, -50%) scale(3)';
+                cursor.style.background = 'transparent';
+                cursor.style.border = '1px solid rgba(255,255,255,0.8)';
+                cursor.style.mixBlendMode = 'normal';
+                cursor.style.backdropFilter = 'blur(2px)';
+            } else {
+                cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+                cursor.style.background = 'rgba(255,255,255,0.9)';
+                cursor.style.border = 'none';
+                cursor.style.mixBlendMode = 'difference';
+                cursor.style.backdropFilter = 'none';
+            }
+        });
+
+        // --- 黑胶粒子系统 ---
+        function initVinylParticles() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            const vinylSection = document.querySelector('.vinyl-section');
+            
+            function resize() {
+                canvas.width = vinylSection.offsetWidth;
+                canvas.height = vinylSection.offsetHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() { this.reset(); }
+                reset() {
+                    const maxR = canvas.width / 2;
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.radius = Math.random() * maxR * 0.95 + 10;
+                    this.size = Math.random() * 1.5 + 0.5;
+                    const isGold = Math.random() > 0.92;
+                    this.color = isGold 
+                        ? `rgba(255, 215, 80, ${Math.random()*0.8+0.2})` 
+                        : `rgba(${Math.floor(Math.random()*200+55)}, 255, 255, ${Math.random()*0.5+0.1})`;
+                    this.speed = (0.002 + Math.random()*0.001) / (this.radius/200);
+                    if(isGold) { this.size += 0.5; this.speed *= 1.5; }
+                }
+                update() {
+                    const spd = isBgmPlaying ? 2.5 : 0.5;
+                    this.angle += this.speed * spd;
+                    const cx = canvas.width/2, cy = canvas.height/2;
+                    const wave = Math.sin(Date.now()*0.001 + this.radius)*0.5;
+                    this.x = cx + Math.cos(this.angle)*(this.radius+wave);
+                    this.y = cy + Math.sin(this.angle)*(this.radius+wave);
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+                }
+            }
+
+            for(let i=0; i<1600; i++) vinylParticles.push(new Particle());
+        }
+
+        // --- [核心修改] 统一物理动画 ---
+        function animateAll() {
+            // [极致慢速] 0.0008 阻尼
+            currentRotatorAngle += (targetRotatorAngle - currentRotatorAngle) * 0.0008;
+
+            const rotator = document.getElementById('rotator');
+            if(rotator) {
+                rotator.style.transform = `rotate(${currentRotatorAngle}deg)`;
+                document.querySelectorAll('.card-group').forEach(group => {
+                    const baseAngle = parseFloat(group.dataset.baseAngle);
+                    const absoluteAngle = baseAngle + currentRotatorAngle;
+                    const rad = absoluteAngle * (Math.PI / 180);
+                    const waveY = Math.cos(rad) * 120 - 120; 
+                    group.style.transform = `rotate(${baseAngle}deg) translateY(${waveY}px)`;
+                });
+            }
+
+            const vCanvas = document.getElementById('particle-canvas');
+            const vCtx = vCanvas.getContext('2d');
+            vCtx.clearRect(0,0,vCanvas.width,vCanvas.height);
+            vinylParticles.forEach(p => { p.update(); p.draw(vCtx); });
+            
+            updateAndDrawConnections();
+            
+            requestAnimationFrame(animateAll);
+        }
+
+        // --- 音频处理 ---
+        const bgm = document.getElementById('bgm');
+        const previewAudio = document.getElementById('card-preview-audio');
+
+        function playCardAudio(url) {
+            if (!bgm.paused) {
+                bgm.pause();
+                previewAudio.dataset.bgmWasPlaying = 'true';
+            }
+            previewAudio.src = url;
+            previewAudio.volume = bgm.volume;
+            previewAudio.play();
+            
+            const restoreBgm = () => {
+                if (previewAudio.dataset.bgmWasPlaying === 'true') {
+                    bgm.play();
+                    previewAudio.dataset.bgmWasPlaying = 'false';
+                }
+            };
+            previewAudio.onended = restoreBgm;
+            previewAudio.onpause = restoreBgm;
+        }
+
+        document.getElementById('bgm-upload-input').onchange = (e) => {
+            endUpload(); 
+            const f = e.target.files[0];
+            if(f) { 
+                bgm.src = URL.createObjectURL(f); 
+                bgm.play(); 
+                isBgmPlaying = true; 
+            }
+        };
+        document.getElementById('img-upload-input').onchange = (e) => {
+            endUpload();
+            const f = e.target.files[0];
+            if(f && activeCardForImg) { 
+                activeCardForImg.src = URL.createObjectURL(f); 
+                e.target.value = ''; 
+            }
+        };
+        document.getElementById('card-audio-input').onchange = (e) => {
+            endUpload();
+            const f = e.target.files[0];
+            if(f && activeCardForAudio) {
+                activeCardForAudio.dataset.audioUrl = URL.createObjectURL(f);
+                activeCardForAudio.querySelector('.music-btn').classList.add('has-audio');
+                e.target.value = '';
+            }
+        };
+        document.getElementById('volume-slider').oninput = (e) => {
+            bgm.volume = previewAudio.volume = e.target.value;
+        };
 
     </script>
 </body>
